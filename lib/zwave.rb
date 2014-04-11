@@ -10,8 +10,13 @@ module ZWave
       @port = SerialPort.new(port, speed, 8, 1, SerialPort::NONE)
       @port.read_timeout = 1000
       throw "Failed to open port #{device} for ZWave SerialAPI interface" unless @port
+      @receive_buffer = Array.new
     end
     
+    def protocol_debug=(value)
+      @protocol_debug = value
+    end
+
     def debug=(value)
       @debug = value
     end
@@ -22,6 +27,37 @@ module ZWave
     
     def switch(unit_id)
       return Switch.new self, unit_id
+    end
+    
+    def send_byte(byte)
+      printf "Sending byte: 0x%02x\n", byte if @protocol_debug
+      @port.write byte.chr
+    end
+    
+    def send_bytes(bytes)
+      if(@protocol_debug) then
+        print "Sending bytes: "
+        bytes.each_byte do |byte|
+          printf "0x%02x ", byte
+        end
+        print "\n"
+      end
+      @port.write bytes
+    end
+    
+    def recv_byte
+      begin
+        @receive_buffer.concat @port.read_nonblock(255).unpack("C*")
+      rescue Errno::EAGAIN
+        # try again until we have at least one byte
+        # TODO: don't try forever
+        retry if @receive_buffer.length == 0
+      end
+      return nil if @receive_buffer.length == 0
+      printf "Receive buffer is #{@receive_buffer.length} bytes long.\n" if @protocol_debug
+      byte = @receive_buffer.shift
+      printf "Received byte: 0x%02x\n", byte if @protocol_debug
+      byte
     end
     
     # TODO: don't retry forever
@@ -40,23 +76,23 @@ module ZWave
       
       # send the start byte separately
       # we don't include this in @bytes since it doesn't go into the checksum)
-      @port.putc Constants::Preamble::REQUEST
+      send_byte Constants::Preamble::REQUEST
       
       # send out all the bytes
-      @port.write bytes.pack("C*")
+      send_bytes bytes.pack("C*")
       
       # calculate the checksum (XOR of each byte against 0xFF)
       checksum = 0xFF
       bytes.each {|byte| checksum ^= byte }
       
       # send the checksum
-      @port.putc checksum
+      send_byte checksum
     end
     
     def read_response
       acked = false
       
-      status = @port.getbyte
+      status = recv_byte
       if(status != Constants::Preamble::ACK) then
         # first byte should be an ACK, if not then we give up and will retry
         debug_msg "Didn't get ack (got 0x#{status.to_s(16)}), aborting"
@@ -65,7 +101,7 @@ module ZWave
       end
 
       # second byte should say this is a request
-      type = @port.getbyte
+      type = recv_byte
       if(type != Constants::Preamble::REQUEST) then
         # don't know how to deal with anything but a REQUEST as i've never seen anything else
         debug_msg "Didn't get expected REQUEST byte (got 0x#{type.to_s(16)}), aborting"
@@ -73,18 +109,18 @@ module ZWave
       end
       
       # third byte is how long the response will be
-      length = @port.getbyte
+      length = recv_byte
       debug_msg "Got response length: #{length}"
       
       # i don't understand what the response /is/ but we know how long it is so read/ignore it
       # TODO: there's likely a checksum at the end of responses, we should check it
       (1..length).each do |byte_nbr|
-        byte = @port.getbyte
+        byte = recv_byte
         debug_msg "Got response byte #{byte_nbr}: 0x#{byte.to_s(16)}"
       end
       
       # we need to ack the response or the controller will keep retrying
-      @port.putc Constants::Preamble::ACK
+      send_byte Constants::Preamble::ACK
       
       # all good!
       true
@@ -117,6 +153,14 @@ module ZWave
     
     def switch_off
       @controller.dim @unit_id, 0
+    end
+    
+    def set(level)
+      if(level < 0.5) then
+        @controller.dim @unit_id, 0
+      else
+        @controller.dim @unit_id, 255 if level >= 0.5
+      end
     end
   end
 end
