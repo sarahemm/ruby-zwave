@@ -26,6 +26,8 @@ module ZWave
       class FunctionClass
         # value from reversing
         SEND_DATA = 0x13
+        # value from reversing
+        GET_NODE_PROTOCOL_INFO = 0x41
       end
       
       # name from Electronic Solutions DBMZ v2+1 manual
@@ -38,6 +40,8 @@ module ZWave
         #CONFIGURATON = 
         #SWITCH_ALL = 
         #MFG_SPECIFIC_GET = 
+        # name and value from http://wiki.micasaverde.com/index.php/ZWave_Command_Classes
+        ASSOCIATION = 0x85
       end
       
       class Command
