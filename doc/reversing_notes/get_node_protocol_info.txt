@@ -1,0 +1,18 @@
+unit 4 - GE Outdoor Module
+unit 6 - Leviton VRCS4-MRZ - controller
+unit 7 - Leviton VRCS4-MRZ - switch
+
+4 and 7 should show up as plain on/off switches
+6 should show up as a controller of some kind
+4 can definitely route, 7 may or may not be able to
+
+#		4			6			7
+1		0x01	0x01	0x01 - Preamble::REQUEST
+2		0x41	0x41	0x41 - FunctionClass::GET_NODE_PROTOCOL_INFO
+3		0xd3	0x92	0x92 - ??? the two functions on the VRCS4-MRZ are both 0x92, but no idea what this is
+4		0x9c	0x86	0x84 - ??? don't know what this either
+5		0x00	0x00	0x00 - always 0? reserved maybe?
+6		0x04	0x02	0x03 - these match expected basic classes
+7		0x10	0x01	0x10 - these match expected generic classes
+8		0x01	0x00	0x00 - this must be the specific class?
+9		0xec	0xa1	0xb3 - checksum probably?
