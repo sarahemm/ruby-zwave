@@ -19,12 +19,12 @@ association set
 - dest node 1
 - group 1
 
-START		???			???			SNDDAT	srcnod	???			ASSOC		SET			group		dstnod	???			???			cksum?
+REQEST	pktlen	PKSTRT	SNDDAT	srcnod	length	ASSOC		SET			group		dstnod	???			cbkid		cksum
 0x01		0x0b		0x00		0x13		0x03		0x04		0x85		0x01		0x01		0x01		0x25		0x05		0x44
 
 association get
 - node 3
 - group 1
 
-START		???			???			SNDDAT	node		???			ASSOC		GET			group		???			???			cksum?
+REQEST	pktlen	PKSTRT	SNDDAT	node		length	ASSOC		GET			group		???			cbkid		cksum
 0x01		0x0a		0x00		0x13		0x03		0x03		0x85		0x02		0x01		0x25		0x06		0x43

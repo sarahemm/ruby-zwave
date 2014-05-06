@@ -1,0 +1,15 @@
+SENDDATA seems to be used to send a random chunk of data (usually a command) to a remote z-wave device.
+
+Byte 0: REQUEST
+Byte 1: packet lengt
+Byte 2: PKT_START
+Byte 3: SEND_DATA
+Byte 4: Node ID to send data to
+Byte 5: Length of data to send
+Byte 5-5+length: Data to send
+Next optional byte?: 0x25 in ASSSOCIATION requests but not present at all in DIM requests. Maybe something about responses?
+Next byte: Callback ID (included in responses to the data so you can correlate them with requests)
+Next byte: Checksum
+
+REQEST	pktlen	PKSTRT	SNDDAT	srcnod	length	ASSOC		SET			group		dstnod	???			cbkid		cksum
+0x01		0x0b		0x00		0x13		0x03		0x04		0x85		0x01		0x01		0x01		0x25		0x05		0x44
