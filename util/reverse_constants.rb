@@ -13,10 +13,10 @@ until($stdin.eof?) do
 end
 bytes = Array.new
 byte_string.split(/\s+/).each do |byte_text|
-  if(/0x[0-9A-Fa-f]{2}/.match(byte_text)) then
-    # starts with 0x, must be hex
-    raw_val = /0x([0-9A-Fa-f]{2})/.match(byte_text)[1]
-    bytes.push(raw_val.to_i(16))
+  if(/0x[0-9A-Fa-f]{2}/.match(byte_text)) or ARGV[0] == "hex"
+    # starts with 0x or user is forcing hex, must be hex
+    byte_text.sub!("0x", "")
+    bytes.push(byte_text.to_i(16))
   else
     bytes.push(byte_text.to_i(10))
   end
