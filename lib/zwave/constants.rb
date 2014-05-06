@@ -50,6 +50,12 @@ module ZWave
           SET = 0x01
           GET = 0x02
         end
+
+        # via reversing
+        class Association
+          SET = 0x01
+          GET = 0x02
+        end
         
         # names from Electronic Solutions DBMZ v2+1 manual, values not yet known
         class MultilevelSwitch

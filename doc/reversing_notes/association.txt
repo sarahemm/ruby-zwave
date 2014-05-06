@@ -1,0 +1,30 @@
+DOC NOTES
+---------
+Engineering Spec - Aeon Labs Micro Smart Dimmer (2nd Edition):
+Set Association group 1 Associate to node "1"
+ ZW_SendData(0x85, 0x01, 0x01, 0x01);
+Set Association group 2 Associate to node "1"
+ ZW_SendData(0x85, 0x01, 0x02, 0x01);
+
+Byte 0 - 0x85 - CommandClass::ASSOCIATION
+Byte 1 - based on reversing this is SET
+Byte 2 - group number to associate
+Byte 3 - based on reversing this is the destination node
+
+REVERSING
+---------
+
+association set
+- source node 3
+- dest node 1
+- group 1
+
+START		???			???			SNDDAT	srcnod	???			ASSOC		SET			group		dstnod	???			???			cksum?
+0x01		0x0b		0x00		0x13		0x03		0x04		0x85		0x01		0x01		0x01		0x25		0x05		0x44
+
+association get
+- node 3
+- group 1
+
+START		???			???			SNDDAT	node		???			ASSOC		GET			group		???			???			cksum?
+0x01		0x0a		0x00		0x13		0x03		0x03		0x85		0x02		0x01		0x25		0x06		0x43
