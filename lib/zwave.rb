@@ -183,13 +183,13 @@ module ZWave
         Constants::Framing::PKT_START,
         Constants::FunctionClass::SEND_DATA,
         unit_id_source,
-        0x04, # from reversing, no idea what this is
+        4, # length of command (class, command, two arguments)
         Constants::CommandClass::ASSOCIATION,
         Constants::Command::Association::SET,
         group_id,
         unit_id_dest,
         0x25, # from reversing, no idea what this is
-        0x05, # from reversing, no idea what this is
+        next_callback_id
       ]
     end
     
@@ -200,14 +200,14 @@ module ZWave
         Constants::Framing::PKT_START,
         Constants::FunctionClass::SEND_DATA,
         unit_id,
-        0x03, # 3 bytes are in the command
+        3, # length of command (class, command, one argument)
         Constants::CommandClass::ASSOCIATION,
         Constants::Command::Association::GET,
         group_id,
         0x25, # from reversing, no idea what this is
-        0xBD, # correlation ID
+        next_callback_id
       ]
-      p read_response(true) # this one is somehow tied to the orginal request, it has the correlaton ID in it
+      p read_response(true) # this one is somehow tied to the orginal request, it has the callback ID in it
       p read_response(true)
     end
   end
