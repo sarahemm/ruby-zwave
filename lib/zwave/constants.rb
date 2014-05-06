@@ -33,15 +33,23 @@ module ZWave
       # name from Electronic Solutions DBMZ v2+1 manual
       class CommandClass
         # name from Leviton RZC0P programming guide v1.2, value from reversing
-        BASIC = 0x20
+        BASIC                     = 0x20
         # name from Leviton RZC0P programming guide v1.2, value not yet known
         #MULTILEVEL_SWITCH = 
         # names from Electronic Solutions DBMZ v2+1 manual, values not yet known
-        #CONFIGURATON = 
         #SWITCH_ALL = 
         #MFG_SPECIFIC_GET = 
         # name and value from http://wiki.micasaverde.com/index.php/ZWave_Command_Classes
-        ASSOCIATION = 0x85
+        ASSOCIATION               = 0x85
+        # names and values from BeNext Quick start: Tag Reader EU (www.benext.eu/static/manual/tagreader.pdf)
+        SWITCH_BINARY             = 0x25
+        USER_CODE                 = 0x63
+        CONFIGURATION             = 0x70
+        ALARM_V2                  = 0x71
+        MANUFACTURER_SPECIFIC_V2  = 0x72
+        BATTERY                   = 0x80
+        WAKE_UP                   = 0x84
+        VERSION                   = 0x86
       end
       
       class Command
@@ -66,16 +74,23 @@ module ZWave
         end
       end
       
-      # from Leviton RZC0P programming guide v1.2
+      # class name from Leviton RZC0P programming guide v1.2
       class BasicClass
+        # these are from Leviton RZC0P programming guide v1.2
         CONTROLLER        = 0x01
         STATIC_CONTROLLER = 0x02
         SLAVE             = 0x03
         ROUTING_SLAVE     = 0x04
       end
       
-      # from Leviton RZC0P programming guide v1.2
+      # class name from Leviton RZC0P programming guide v1.2
       class GenericClass
+        # this is from reversing, portable controllers seem to return this
+        # also some things that return STATIC_CONTROLLER for basic return this, what?
+        CONTROLLER        = 0x01
+        # this is from reversing, controllers built into the wall return this
+        STATIC_CONTROLLER = 0x02
+        # these are from Leviton RZC0P programming guide v1.2
         THERMOSTAT        = 0x08
         SWITCH            = 0x10
         DIMMER            = 0x11
