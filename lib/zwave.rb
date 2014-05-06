@@ -11,7 +11,7 @@ module ZWave
       @port.read_timeout = 1000
       throw "Failed to open port #{device} for ZWave SerialAPI interface" unless @port
       @receive_buffer = Array.new
-      @next_callback_id = 0;
+      @next_callback_id = 0
     end
     
     def protocol_debug=(value)
@@ -29,7 +29,7 @@ module ZWave
     def next_callback_id
       callback_id = @next_callback_id
       @next_callback_id += 1
-      @next_callback_id = 0 if @next_callback_if > 0xFF
+      @next_callback_id = 0 if @next_callback_id > 0xFF
       callback_id
     end
     
@@ -154,11 +154,11 @@ module ZWave
         Constants::Framing::PKT_START,
         Constants::FunctionClass::SEND_DATA,
         unit_id,
-        3, # obtained via reversing, don't know what this is but seems to be 3, maybe ASCII ETX or Basic Slave?
+        3, # length of command (class, command, one argument)
         Constants::CommandClass::BASIC,
         Constants::Command::Basic::SET,
         level,
-        5 # obtained via reversing, don't know what this is but seems to be 5, ASCII ENQ but that doesn't make sense here
+        next_callback_id
       ]
     end
     
