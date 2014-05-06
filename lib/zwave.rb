@@ -11,14 +11,7 @@ module ZWave
       @port.read_timeout = 1000
       throw "Failed to open port #{device} for ZWave SerialAPI interface" unless @port
       @receive_buffer = Array.new
-      @next_callback_id = 0
-    end
-    
-    def next_callback_id
-      callback_id = @next_callback_id
-      @next_callback_id += 1
-      @next_callback_id = 0 if @next_callback_id > 0xFF
-      callback_id
+      @next_callback_id = 0;
     end
     
     def protocol_debug=(value)
@@ -31,6 +24,13 @@ module ZWave
     
     def debug_msg(text)
       puts text if @debug
+    end
+    
+    def next_callback_id
+      callback_id = @next_callback_id
+      @next_callback_id += 1
+      @next_callback_id = 0 if @next_callback_if > 0xFF
+      callback_id
     end
     
     def switch(unit_id)
@@ -107,15 +107,17 @@ module ZWave
       send_byte checksum
     end
     
-    def read_response
+    def read_response(skip_ack = false)
       acked = false
       
-      status = recv_byte
-      if(status != Constants::Preamble::ACK) then
-        # first byte should be an ACK, if not then we give up and will retry
-        debug_msg "Didn't get ack (got 0x#{status.to_s(16)}), aborting"
-        # TODO: should interpret what we get more, NAK vs. RESET, etc.
-        return false
+      if(!skip_ack) then
+        status = recv_byte
+        if(status != Constants::Preamble::ACK) then
+          # first byte should be an ACK, if not then we give up and will retry
+          debug_msg "Didn't get ack (got 0x#{status.to_s(16)}), aborting"
+          # TODO: should interpret what we get more, NAK vs. RESET, etc.
+          return false
+        end
       end
 
       # second byte should say this is a request
@@ -152,11 +154,11 @@ module ZWave
         Constants::Framing::PKT_START,
         Constants::FunctionClass::SEND_DATA,
         unit_id,
-        3, # length of command (class, command, one param)
+        3, # obtained via reversing, don't know what this is but seems to be 3, maybe ASCII ETX or Basic Slave?
         Constants::CommandClass::BASIC,
         Constants::Command::Basic::SET,
         level,
-        next_callback_id
+        5 # obtained via reversing, don't know what this is but seems to be 5, ASCII ENQ but that doesn't make sense here
       ]
     end
     
@@ -172,6 +174,41 @@ module ZWave
       generic_class = response[6]
       specific_class = response[7]
       Node.new basic_class, generic_class, specific_class
+    end
+    
+    # ask a node to send events from a certain group to another node
+    def associate(unit_id_source, unit_id_dest, group_id)
+      debug_msg "Adding node #{unit_id_dest} to receive events from group #{group_id} on node #{unit_id_source}"
+      self.send_cmd [
+        Constants::Framing::PKT_START,
+        Constants::FunctionClass::SEND_DATA,
+        unit_id_source,
+        0x04, # from reversing, no idea what this is
+        Constants::CommandClass::ASSOCIATION,
+        Constants::Command::Association::SET,
+        group_id,
+        unit_id_dest,
+        0x25, # from reversing, no idea what this is
+        0x05, # from reversing, no idea what this is
+      ]
+    end
+    
+    # ask a node for a list of where it sends events from a certain group to
+    def get_associations(unit_id, group_id)
+      debug_msg "Getting association list for group #{group_id} on node #{unit_id}"
+      self.send_cmd [
+        Constants::Framing::PKT_START,
+        Constants::FunctionClass::SEND_DATA,
+        unit_id,
+        0x03, # 3 bytes are in the command
+        Constants::CommandClass::ASSOCIATION,
+        Constants::Command::Association::GET,
+        group_id,
+        0x25, # from reversing, no idea what this is
+        0xBD, # correlation ID
+      ]
+      p read_response(true) # this one is somehow tied to the orginal request, it has the correlaton ID in it
+      p read_response(true)
     end
   end
   
