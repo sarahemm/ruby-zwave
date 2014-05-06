@@ -64,7 +64,8 @@ module ZWave
     def send_cmd(bytes)
       while(true) do
         send_cmd_once bytes
-        break if read_response
+        response = read_response
+        return response if response
         debug_msg "ZWave command failed, attempting retry..."
         sleep(RETRY_DELAY / 1000)
       end
@@ -114,8 +115,10 @@ module ZWave
       
       # i don't understand what the response /is/ but we know how long it is so read/ignore it
       # TODO: there's likely a checksum at the end of responses, we should check it
+      response = Array.new
       (1..length).each do |byte_nbr|
         byte = recv_byte
+        response.push byte
         debug_msg "Got response byte #{byte_nbr}: 0x#{byte.to_s(16)}"
       end
       
@@ -123,7 +126,7 @@ module ZWave
       send_byte Constants::Preamble::ACK
       
       # all good!
-      true
+      response
     end
     
     def dim(unit_id, level)
@@ -139,12 +142,62 @@ module ZWave
         5 # obtained via reversing, don't know what this is but seems to be 5, ASCII ENQ but that doesn't make sense here
       ]
     end
+    
+    def get_node_protocol_info(unit_id)
+      debug_msg "Getting protocol info for unit #{unit_id}"
+      response = self.send_cmd [
+        Constants::Framing::PKT_START,
+        Constants::FunctionClass::GET_NODE_PROTOCOL_INFO,
+        unit_id,
+      ]
+      
+      basic_class = response[5]
+      generic_class = response[6]
+      specific_class = response[7]
+      Node.new basic_class, generic_class, specific_class
+    end
+    
+    # get the constant name for a given value in a given class
+    def self.get_constant(constant_class, get_value)
+      constant_class.constants.each do |this_name|
+        this_value = constant_class.const_get(this_name)
+        return this_name if this_value == get_value
+      end
+      "UNKNOWN".to_sym
+    end
   end
   
-  class Switch
+  class Node
+    attr_reader :specific_class
+    
+    def initialize(basic_class_id = nil, generic_class_id = nil, specific_class_id = nil)
+      @basic_class_id = basic_class_id
+      @generic_class_id = generic_class_id
+      @specific_class_id = specific_class_id
+      @specfic_class = [:id => @specific_class_id]
+    end
+    
+    def basic_class
+      [
+        :id => @basic_class_id,
+        :name => ZWave::SerialAPI::get_constant(ZWave::SerialAPI::Constants::BasicClass, @basic_class_id)
+      ]
+    end
+    
+    def generic_class
+      [
+        :id => @generic_class_id,
+        :name => ZWave::SerialAPI::get_constant(ZWave::SerialAPI::Constants::GenericClass, @generic_class_id)
+      ]
+    end
+  end
+  
+  class Switch < Node
     def initialize(controller, unit_id)
       @controller = controller
       @unit_id = unit_id
+      
+      super
     end
     
     def switch_on
