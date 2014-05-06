@@ -11,6 +11,14 @@ module ZWave
       @port.read_timeout = 1000
       throw "Failed to open port #{device} for ZWave SerialAPI interface" unless @port
       @receive_buffer = Array.new
+      @next_callback_id = 0
+    end
+    
+    def next_callback_id
+      callback_id = @next_callback_id
+      @next_callback_id += 1
+      @next_callback_id = 0 if @next_callback_id > 0xFF
+      callback_id
     end
     
     def protocol_debug=(value)
@@ -27,6 +35,15 @@ module ZWave
     
     def switch(unit_id)
       return Switch.new self, unit_id
+    end
+    
+    # get the constant name for a given value in a given class
+    def self.get_constant(constant_class, get_value)
+      constant_class.constants.each do |this_name|
+        this_value = constant_class.const_get(this_name)
+        return this_name if this_value == get_value
+      end
+      "UNKNOWN".to_sym
     end
     
     def send_byte(byte)
@@ -135,11 +152,11 @@ module ZWave
         Constants::Framing::PKT_START,
         Constants::FunctionClass::SEND_DATA,
         unit_id,
-        3, # obtained via reversing, don't know what this is but seems to be 3, maybe ASCII ETX or Basic Slave?
+        3, # length of command (class, command, one param)
         Constants::CommandClass::BASIC,
         Constants::Command::Basic::SET,
         level,
-        5 # obtained via reversing, don't know what this is but seems to be 5, ASCII ENQ but that doesn't make sense here
+        next_callback_id
       ]
     end
     
@@ -155,15 +172,6 @@ module ZWave
       generic_class = response[6]
       specific_class = response[7]
       Node.new basic_class, generic_class, specific_class
-    end
-    
-    # get the constant name for a given value in a given class
-    def self.get_constant(constant_class, get_value)
-      constant_class.constants.each do |this_name|
-        this_value = constant_class.const_get(this_name)
-        return this_name if this_value == get_value
-      end
-      "UNKNOWN".to_sym
     end
   end
   
