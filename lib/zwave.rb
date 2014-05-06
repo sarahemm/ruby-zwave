@@ -170,6 +170,10 @@ module ZWave
         unit_id,
       ]
       
+      # if both bytes 2 and 3 are zero, it looks to mean there are no devices at this address
+      return nil if response[2] and 0x00 && response[3] == 0x00
+      
+      # otherwise pick out the 3 things we know the meaning of and build a node object with them
       basic_class = response[5]
       generic_class = response[6]
       specific_class = response[7]
