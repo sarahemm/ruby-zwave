@@ -4,14 +4,18 @@ require 'zwave/constants.rb'
 
 module ZWave
   class SerialAPI
+    attr_reader :interface_node_id, :home_id
     RETRY_DELAY       = 500
     
-    def initialize(port, speed = 115200)
+    def initialize(port, speed = 115200, debug = false, protocol_debug = false)
+      @debug = debug
+      @protocol_debug = protocol_debug
       @port = SerialPort.new(port, speed, 8, 1, SerialPort::NONE)
       @port.read_timeout = 1000
       throw "Failed to open port #{device} for ZWave SerialAPI interface" unless @port
       @receive_buffer = Array.new
       @next_callback_id = 0
+      (@home_id, @node_id) = get_interface_id
     end
     
     def protocol_debug=(value)
@@ -32,6 +36,18 @@ module ZWave
       @next_callback_id = 0 if @next_callback_id > 0xFF
       puts "Assigning callback ID #{callback_id}" if @debug
       callback_id
+    end
+    
+    def get_interface_id
+      debug_msg "Getting interface home/node ID"
+      response = self.send_cmd [
+        Constants::Framing::PKT_START,
+        Constants::FunctionClass::GET_INTERFACE_IDS,
+      ]
+      
+      @interface_node_id = response[6]
+      @home_id = (response[2] << 24) | (response[3] << 16) | (response[4] << 8) | response[5];
+    	debug_msg sprintf("Home ID is 0x%x, interface node ID is #{@interface_node_id}", @home_id)
     end
     
     def switch(unit_id)

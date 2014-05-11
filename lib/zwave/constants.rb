@@ -26,9 +26,9 @@ module ZWave
       class FunctionClass
         # value from reversing
         SEND_DATA               = 0x13
-        # value from reversing
+        # values from reversing
+        GET_INTERFACE_IDS       = 0x20
         GET_NODE_PROTOCOL_INFO  = 0x41
-        # value from reversing
         DEVICE_UPDATE           = 0x49
       end
       
