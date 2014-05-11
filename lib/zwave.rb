@@ -30,6 +30,7 @@ module ZWave
       callback_id = @next_callback_id
       @next_callback_id += 1
       @next_callback_id = 0 if @next_callback_id > 0xFF
+      puts "Assigning callback ID #{callback_id}" if @debug
       callback_id
     end
     
@@ -160,6 +161,20 @@ module ZWave
         level,
         next_callback_id
       ]
+    end
+    
+    def get(unit_id, command_class)
+      debug_msg "Getting command class 0x#{command_class.to_s(16)} status for node #{unit_id}"
+      p self.send_cmd [
+        Constants::Framing::PKT_START,
+        Constants::FunctionClass::SEND_DATA,
+        unit_id,
+        2, # length of command (class, command, no arguments)
+        command_class,
+        Constants::Command::Basic::GET,
+        next_callback_id
+      ]
+      p read_response(true)
     end
     
     def get_node_protocol_info(unit_id)
