@@ -8,4 +8,4 @@ public documentation and reverse engineering.
 Any contributions must have public references for where the information
 obtained was found, if adding new protocol functionality.
 
-As of May 2014, this is under heavy development and still has frequent breaking API changes. Probably not ready for real use by anyone but me, yet.
+As of mid-2015 this is mostly abandoned since I've switched to an ASCII-based ZWave interface for my house, which https://github.com/sarahemm/ruby-zwaveascii supports instead.
